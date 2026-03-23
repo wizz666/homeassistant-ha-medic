@@ -371,13 +371,17 @@ class HaMedicCoordinator:
         queue = await self._load_queue()
         existing_keys = {q.get("title", "")[:60] for q in queue}
         new_items = 0
+        new_manual: list[dict] = []
 
         for i, finding in enumerate(findings):
             if not finding.get("is_new", True):
                 continue
             fix_type = finding.get("fix_type", "manual")
             title_key = finding.get("title", "")[:60]
-            if fix_type == "manual" or title_key in existing_keys:
+            if title_key in existing_keys:
+                continue
+            if fix_type == "manual":
+                new_manual.append(finding)
                 continue
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             fix_id = f"{ts}_{i}"
@@ -397,6 +401,27 @@ class HaMedicCoordinator:
 
         await self._save_queue(queue)
         self.pending = queue
+
+        # Always notify when findings exist
+        if findings:
+            lines = []
+            for f in findings[:10]:
+                icon = "🔴" if f.get("severity") == "error" else "🟡"
+                fix = f.get("fix_type", "manual")
+                tag = " *(auto-fix available)*" if fix != "manual" else ""
+                lines.append(
+                    f"{icon} **{f.get('title','')}**{tag}\n"
+                    f"{f.get('suggestion','')}"
+                )
+            await self.hass.services.async_call(
+                "persistent_notification", "create",
+                {
+                    "title": f"HA Medic — {self.summary}",
+                    "message": "\n\n".join(lines),
+                    "notification_id": "ha_medic_findings",
+                },
+            )
+
         _LOGGER.info("HA Medic: analysis done — %s, %d new in queue", self.summary, new_items)
         self._notify_listeners()
 
@@ -423,20 +448,27 @@ class HaMedicCoordinator:
         await self._save_queue(queue)
         self.pending = queue
 
-        self.hass.components.persistent_notification.async_dismiss(
-            notification_id=f"ha_medic_{fix_id}"
+        await self.hass.services.async_call(
+            "persistent_notification", "dismiss",
+            {"notification_id": f"ha_medic_{fix_id}"},
         )
         if success:
-            self.hass.components.persistent_notification.async_create(
-                title="HA Medic: Fix applied",
-                message=f"**{item['title']}**\n\n{msg}",
-                notification_id=f"ha_medic_{fix_id}_done",
+            await self.hass.services.async_call(
+                "persistent_notification", "create",
+                {
+                    "title": "HA Medic: Fix applied",
+                    "message": f"**{item['title']}**\n\n{msg}",
+                    "notification_id": f"ha_medic_{fix_id}_done",
+                },
             )
         else:
-            self.hass.components.persistent_notification.async_create(
-                title="HA Medic: Manual action needed",
-                message=f"**{item['title']}**\n\n{item['suggestion']}",
-                notification_id=f"ha_medic_{fix_id}_done",
+            await self.hass.services.async_call(
+                "persistent_notification", "create",
+                {
+                    "title": "HA Medic: Manual action needed",
+                    "message": f"**{item['title']}**\n\n{item['suggestion']}",
+                    "notification_id": f"ha_medic_{fix_id}_done",
+                },
             )
         self._notify_listeners()
 
@@ -449,16 +481,18 @@ class HaMedicCoordinator:
         queue = [q for q in queue if q.get("id") != fix_id]
         await self._save_queue(queue)
         self.pending = queue
-        self.hass.components.persistent_notification.async_dismiss(
-            notification_id=f"ha_medic_{fix_id}"
+        await self.hass.services.async_call(
+            "persistent_notification", "dismiss",
+            {"notification_id": f"ha_medic_{fix_id}"},
         )
         self._notify_listeners()
 
     async def async_dismiss_all(self) -> None:
         queue = await self._load_queue()
         for item in queue:
-            self.hass.components.persistent_notification.async_dismiss(
-                notification_id=f"ha_medic_{item['id']}"
+            await self.hass.services.async_call(
+                "persistent_notification", "dismiss",
+                {"notification_id": f"ha_medic_{item['id']}"},
             )
         await self._save_queue([])
         self.pending = []
