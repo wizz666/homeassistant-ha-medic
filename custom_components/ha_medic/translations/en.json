@@ -1,0 +1,46 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Medic — AI Log Diagnostics",
+        "description": "Connect an AI provider to analyze your Home Assistant logs. Get a free API key at console.groq.com (recommended) or openrouter.ai/keys.",
+        "data": {
+          "ai_provider": "AI Provider",
+          "ai_key": "API Key",
+          "ai_base_url": "Base URL (optional, for custom providers)",
+          "ai_model": "Model (optional, uses provider default)"
+        },
+        "data_description": {
+          "ai_provider": "groq and ollama are recommended for local/free usage",
+          "ai_key": "Leave empty for ollama or lmstudio",
+          "ai_base_url": "Only needed for 'custom' provider",
+          "ai_model": "Leave empty to use the provider's default model"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HA Medic is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HA Medic Settings",
+        "data": {
+          "ai_provider": "AI Provider",
+          "ai_key": "API Key",
+          "ai_base_url": "Base URL (optional)",
+          "ai_model": "Model (optional)",
+          "notify_service": "Notification service (optional)",
+          "include_addon_logs": "Include add-on logs (HAOS only)",
+          "scan_interval": "Scheduled analysis interval (hours, 0 = manual only)"
+        },
+        "data_description": {
+          "notify_service": "e.g. mobile_app_your_phone — for push notifications with approve/decline buttons",
+          "include_addon_logs": "Requires Home Assistant OS. Fetches logs from all running add-ons.",
+          "scan_interval": "0 disables automatic analysis. Use ha_medic.analyze service to trigger manually."
+        }
+      }
+    }
+  }
+}

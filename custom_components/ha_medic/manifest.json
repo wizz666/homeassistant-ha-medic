@@ -1,0 +1,12 @@
+{
+  "domain": "ha_medic",
+  "name": "HA Medic",
+  "codeowners": ["@wizz666"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/wizz666/homeassistant-ha-medic",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/wizz666/homeassistant-ha-medic/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

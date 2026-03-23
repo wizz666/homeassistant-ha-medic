@@ -1,0 +1,100 @@
+title: HA Medic
+icon: mdi:stethoscope
+path: ha-medic
+cards:
+  - type: vertical-stack
+    cards:
+      # ── Banner ──────────────────────────────────────────────────────────────
+      - type: custom:button-card
+        name: HA Medic 🩺
+        label: AI-powered log diagnostics
+        show_label: true
+        styles:
+          card:
+            - background: "linear-gradient(135deg, #1a237e 0%, #0d47a1 100%)"
+            - border-radius: 12px
+            - padding: 16px
+          name:
+            - font-size: 22px
+            - font-weight: bold
+            - color: white
+          label:
+            - color: "rgba(255,255,255,0.7)"
+            - font-size: 13px
+
+      # ── Status row ──────────────────────────────────────────────────────────
+      - type: entities
+        title: Status
+        entities:
+          - entity: sensor.ha_medic_status
+            name: Status
+          - entity: sensor.ha_medic_findings
+            name: Findings
+          - entity: sensor.ha_medic_pending
+            name: Pending approvals
+
+      # ── Actions ─────────────────────────────────────────────────────────────
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Analyze now
+            icon: mdi:magnify-scan
+            tap_action:
+              action: call-service
+              service: ha_medic.analyze
+          - type: button
+            name: Approve first
+            icon: mdi:check-circle
+            tap_action:
+              action: call-service
+              service: ha_medic.approve
+          - type: button
+            name: Decline first
+            icon: mdi:close-circle
+            tap_action:
+              action: call-service
+              service: ha_medic.decline
+          - type: button
+            name: Dismiss all
+            icon: mdi:notification-clear-all
+            tap_action:
+              action: call-service
+              service: ha_medic.dismiss_all
+
+      # ── Findings detail ──────────────────────────────────────────────────────
+      - type: markdown
+        title: Latest findings
+        content: >
+          {% set s = states('sensor.ha_medic_findings') %}
+          {% set findings = state_attr('sensor.ha_medic_findings', 'findings') or [] %}
+          {% set last_run = state_attr('sensor.ha_medic_findings', 'last_run') %}
+          {% if last_run %}*Last run: {{ last_run }}*{% endif %}
+
+          {% if findings | length == 0 %}
+          ✅ No findings.
+          {% else %}
+          {% for f in findings %}
+          ---
+          **{% if f.severity == 'error' %}🔴{% elif f.severity == 'warning' %}🟡{% else %}🔵{% endif %} {{ f.title }}**{% if not f.is_new %} *(recurring)*{% endif %}
+
+          {{ f.description }}
+
+          💡 *{{ f.suggestion }}*
+          {% endfor %}
+          {% endif %}
+
+      # ── Pending queue ────────────────────────────────────────────────────────
+      - type: markdown
+        title: Pending approvals
+        content: >
+          {% set pending = state_attr('sensor.ha_medic_pending', 'pending') or [] %}
+          {% if pending | length == 0 %}
+          ✅ Queue empty.
+          {% else %}
+          {% for p in pending %}
+          ---
+          **{{ p.title }}** `{{ p.fix_type }}`
+
+          {{ p.suggestion }}
+          {% endfor %}
+          {% endif %}

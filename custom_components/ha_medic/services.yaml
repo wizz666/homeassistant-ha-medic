@@ -1,0 +1,29 @@
+analyze:
+  name: Analyze logs
+  description: Fetch Home Assistant logs and analyze them with AI. Results appear in the sensors and as persistent notifications.
+
+approve:
+  name: Approve fix
+  description: Approve and execute a queued fix suggestion.
+  fields:
+    fix_id:
+      name: Fix ID
+      description: ID of the fix to approve. Leave empty to approve the first in queue.
+      example: "20260323_143022_0"
+      selector:
+        text:
+
+decline:
+  name: Decline fix
+  description: Decline a queued fix suggestion without executing it.
+  fields:
+    fix_id:
+      name: Fix ID
+      description: ID of the fix to decline. Leave empty to decline the first in queue.
+      example: "20260323_143022_0"
+      selector:
+        text:
+
+dismiss_all:
+  name: Dismiss all
+  description: Clear all pending fix suggestions from the queue.
